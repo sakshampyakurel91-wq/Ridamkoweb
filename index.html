@@ -1,1 +1,204 @@
+<!doctype html>
 
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple News — Demo</title>
+  <style>
+    :root{--accent:#2b6cb0;--muted:#667085;--card:#ffffff}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#f4f6f8;color:#0f1724}
+    header{background:linear-gradient(90deg,#fff 0%,#f8fafc 100%);border-bottom:1px solid #e6eef6}
+    .wrap{max-width:980px;margin:0 auto;padding:18px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:8px;background:var(--accent);display:inline-grid;place-items:center;color:#fff;font-weight:700}
+    .title{font-size:20px;margin:0}.controls{display:flex;gap:12px;align-items:center;margin-top:10px}
+.search{flex:1}
+input[type="search"]{width:100%;padding:10px 12px;border:1px solid #d7e3f2;border-radius:8px}
+.categories{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:6px 10px;border-radius:999px;border:1px solid transparent;background:#eef6ff;color:var(--accent);cursor:pointer}
+.chip.active{background:var(--accent);color:#fff}
+
+main{max-width:980px;margin:20px auto;padding:18px}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(15,23,36,0.05);border:1px solid #edf3fb}
+.headline{font-weight:700;margin:0 0 8px 0}
+.meta{font-size:13px;color:var(--muted);margin-bottom:10px}
+.excerpt{color:#243044}
+.thumb{width:100%;height:160px;background:#cfe3ff;border-radius:10px;object-fit:cover;margin-bottom:10px}
+
+.list{display:flex;flex-direction:column;gap:12px}
+.list-item{display:flex;gap:12px;align-items:flex-start}
+.list-thumb{width:96px;height:64px;background:#e6f0ff;border-radius:8px;flex-shrink:0}
+
+.sidebar .widget{margin-bottom:12px}
+.small{font-size:13px;color:var(--muted)}
+
+footer{text-align:center;padding:20px;color:var(--muted);font-size:13px}
+
+@media (max-width:800px){
+  .grid{grid-template-columns:1fr}
+  .thumb{height:200px}
+  .list-thumb{width:80px;height:54px}
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo">N</div>
+        <div>
+          <h1 class="title">Simple News</h1>
+          <div class="small">Daily headlines — demo site</div>
+        </div>
+      </div><div class="controls" style="margin-top:12px">
+    <div class="search">
+      <input id="search" type="search" placeholder="Search headlines, e.g. climate, sports..." />
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="allBtn" class="chip active">All</button>
+      <button class="chip" data-cat="World">World</button>
+      <button class="chip" data-cat="Tech">Tech</button>
+      <button class="chip" data-cat="Business">Business</button>
+      <button class="chip" data-cat="Sports">Sports</button>
+    </div>
+  </div>
+</div>
+
+  </header>  <main>
+    <div class="grid">
+      <section>
+        <div id="featured" class="card">
+          <!-- Featured article injected here -->
+        </div><h3 style="margin-top:18px">Latest</h3>
+    <div id="list" class="list">
+      <!-- Article list injected here -->
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <div class="card widget">
+      <h4 style="margin:0 0 8px 0">Top Stories</h4>
+      <div id="topStories"></div>
+    </div>
+
+    <div class="card widget">
+      <h4 style="margin:0 0 8px 0">About</h4>
+      <p class="small">This is a minimal demo news site built with plain HTML, CSS and JavaScript. Use it as a template.</p>
+    </div>
+  </aside>
+</div>
+
+  </main>  <footer>
+    <div class="wrap">Made with ♥ — demo site. Customize as you like.</div>
+  </footer>  <script>
+    // Sample data (in a real site this would come from an API)
+    const articles = [
+      {id:1,title:'Global climate talks reach compromise on emissions',category:'World',date:'2025-11-20',excerpt:'Negotiators agreed to a stepped plan to reduce emissions across sectors over the next decade.',image:''},
+      {id:2,title:'Startup launches AI tool to speed up drug discovery',category:'Tech',date:'2025-11-21',excerpt:'The new platform shortens early-stage research by automating molecule simulations.',image:''},
+      {id:3,title:'Stock markets end mixed as inflation data surprises',category:'Business',date:'2025-11-22',excerpt:'Investors digested higher-than-expected consumer prices while betting on rate cuts.',image:''},
+      {id:4,title:'Underdog wins national football cup in thrilling final',category:'Sports',date:'2025-11-19',excerpt:'A late goal secured the trophy in front of a packed stadium.',image:''},
+      {id:5,title:'City outlines plan to expand bike lanes',category:'World',date:'2025-11-18',excerpt:'The transportation department says the network will double in length over three years.',image:''}
+    ];
+
+    // Utilities
+    const $ = sel => document.querySelector(sel);
+    const $all = sel => Array.from(document.querySelectorAll(sel));
+
+    // Render functions
+    function renderFeatured(list){
+      const item = list[0];
+      if(!item) { $('#featured').innerHTML = '<p>No articles found.</p>'; return }
+      $('#featured').innerHTML = `
+        <img class="thumb" alt="" src="https://picsum.photos/800/400?random=${item.id}">
+        <h2 class="headline">${escapeHtml(item.title)}</h2>
+        <div class="meta">${item.category} • ${item.date}</div>
+        <p class="excerpt">${escapeHtml(item.excerpt)}</p>
+        <p style="margin-top:12px"><button data-id="${item.id}" class="readBtn">Read more</button></p>
+      `;
+    }
+
+    function renderList(list){
+      const container = $('#list');
+      container.innerHTML = '';
+      list.slice(0,10).forEach(a => {
+        const div = document.createElement('div'); div.className='list-item card';
+        div.innerHTML = `
+          <div class="list-thumb"><img style="width:100%;height:100%;object-fit:cover;border-radius:8px" src="https://picsum.photos/200/120?random=${a.id}" alt=""></div>
+          <div style="flex:1">
+            <h4 style="margin:0"><a href="#" data-id="${a.id}" class="readLink">${escapeHtml(a.title)}</a></h4>
+            <div class="meta">${a.category} • ${a.date}</div>
+            <div class="small">${escapeHtml(a.excerpt)}</div>
+          </div>
+        `;
+        container.appendChild(div);
+      })
+    }
+
+    function renderTop(list){
+      const el = $('#topStories'); el.innerHTML='';
+      list.slice(0,3).forEach(a=>{
+        const p = document.createElement('p'); p.className='small';
+        p.innerHTML = `<strong>${escapeHtml(a.title)}</strong><br><span class=\"small\">${a.date}</span>`;
+        el.appendChild(p);
+      })
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>\"]+/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;', '"':'&quot;' }[c]||c));
+    }
+
+    // Filtering / search
+    function applyFilter(){
+      const q = $('#search').value.trim().toLowerCase();
+      const active = $all('.chip').find(c=>c.classList.contains('active'));
+      const cat = active && active.dataset.cat ? active.dataset.cat : null;
+      let filtered = articles.filter(a=>{
+        const matchCat = !cat || a.category===cat;
+        const matchQ = !q || (a.title+" "+a.excerpt+" "+a.category).toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+      // sort by date desc
+      filtered.sort((a,b)=> b.date.localeCompare(a.date));
+      renderFeatured(filtered);
+      renderList(filtered);
+      renderTop(filtered);
+    }
+
+    // Initialize
+    function init(){
+      // wire category chips
+      $all('.chip').forEach(chip=>{
+        chip.addEventListener('click',()=>{
+          $all('.chip').forEach(c=>c.classList.remove('active'));
+          chip.classList.add('active');
+          applyFilter();
+        })
+      });
+
+      $('#search').addEventListener('input',(()=>{ applyFilter(); }));
+
+      // delegated read more
+      document.body.addEventListener('click',e=>{
+        if(e.target.matches('.readBtn')||e.target.matches('.readLink')){
+          e.preventDefault();
+          const id = Number(e.target.dataset.id);
+          openArticle(id);
+        }
+      });
+
+      applyFilter();
+    }
+
+    function openArticle(id){
+      const a = articles.find(x=>x.id===id); if(!a) return;
+      // simple modal using window.alert for demo; replace with a nicer modal as needed
+      alert(a.title + '\n\n' + a.date + ' • ' + a.category + '\n\n' + a.excerpt + '\n\n(Full article content would appear here.)');
+    }
+
+    init();
+  </script></body>
+</html>
